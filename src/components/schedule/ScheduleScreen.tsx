@@ -32,11 +32,9 @@ export function ScheduleScreen() {
 
   return (
     <div
-      className="relative w-full h-full max-w-[1280px] max-h-[720px] overflow-hidden flex flex-col"
+      className="relative w-full h-full overflow-hidden flex flex-col"
       style={{
-        aspectRatio: '16 / 9',
         background: 'linear-gradient(180deg, #0a0a1a 0%, #16213e 50%, #0f3460 100%)',
-        boxShadow: '0 0 60px rgba(0, 0, 0, 0.8)',
       }}
     >
       {/* Header */}

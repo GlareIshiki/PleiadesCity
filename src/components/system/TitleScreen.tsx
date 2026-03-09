@@ -50,11 +50,9 @@ export function TitleScreen() {
 
   return (
     <div
-      className="relative w-full h-full max-w-[1280px] max-h-[720px] overflow-hidden flex flex-col items-center justify-center"
+      className="relative w-full h-full overflow-hidden flex flex-col items-center justify-center"
       style={{
-        aspectRatio: '16 / 9',
         background: 'linear-gradient(180deg, #0a0a1a 0%, #16213e 40%, #0f3460 70%, #1a1a2e 100%)',
-        boxShadow: '0 0 60px rgba(0, 0, 0, 0.8)',
       }}
     >
       {/* Stars background */}
