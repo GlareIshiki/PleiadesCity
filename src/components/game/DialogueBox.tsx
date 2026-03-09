@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useGameStore } from '../../stores/gameStore'
 import { CHARACTERS } from '../../data/characters'
 import { AudioManager } from '../../systems/AudioManager'
@@ -165,11 +165,7 @@ export function DialogueBox() {
   if (!dialogue) return null
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
+      <div
         className="absolute bottom-0 left-0 right-0 px-4 pb-4"
       >
         {/* Name tag */}
@@ -229,7 +225,6 @@ export function DialogueBox() {
             </div>
           )}
         </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
   )
 }
