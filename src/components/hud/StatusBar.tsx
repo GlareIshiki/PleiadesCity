@@ -5,6 +5,7 @@ export function StatusBar() {
   const week = useGameStore((s) => s.gameState.week)
   const affinity = useGameStore((s) => s.gameState.affinity)
   const adaptation = useGameStore((s) => s.gameState.adaptation)
+  const setScreen = useGameStore((s) => s.setScreen)
 
   if (week === 0) return null // Don't show during prologue
 
@@ -40,7 +41,20 @@ export function StatusBar() {
         })}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={(e) => { e.stopPropagation(); setScreen('save') }}
+          className="text-pleiades-sky/40 hover:text-pleiades-sky/80 cursor-pointer transition-colors"
+        >
+          SAVE
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setScreen('load') }}
+          className="text-pleiades-sky/40 hover:text-pleiades-sky/80 cursor-pointer transition-colors"
+        >
+          LOAD
+        </button>
+        <span className="text-white/10">|</span>
         <span className="text-pleiades-sky/50">適応度</span>
         <div className="w-20 h-2 rounded-full overflow-hidden bg-white/10">
           <div

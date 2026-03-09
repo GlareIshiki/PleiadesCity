@@ -13,6 +13,8 @@ import { CHARACTERS } from '../data/characters'
 import { INITIAL_ADAPTATION, MAX_AFFINITY, MAX_ADAPTATION, SAVE_SLOT_COUNT } from '../data/constants'
 import { evaluateCondition } from '../engine/ConditionEvaluator'
 import { SCENE_REGISTRY } from '../scenarios'
+import { useAuthStore } from './authStore'
+import { cloudSaveToSlot, cloudGetSaveSlots, cloudDeleteSave } from '../lib/cloudSave'
 
 export type Screen = 'title' | 'game' | 'schedule' | 'save' | 'load' | 'backlog' | 'settings'
 
@@ -70,6 +72,7 @@ interface GameStore {
   saveToSlot: (slotId: number) => void
   loadFromSlot: (slotId: number) => SaveSlot | null
   getSaveSlots: () => (SaveSlot | null)[]
+  fetchSaveSlots: () => Promise<(SaveSlot | null)[]>
   deleteSave: (slotId: number) => void
 }
 
@@ -318,6 +321,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameState: JSON.parse(JSON.stringify(gameState)),
     }
     localStorage.setItem(`pleiades_save_${slotId}`, JSON.stringify(slot))
+
+    // Cloud save (async, non-blocking)
+    const user = useAuthStore.getState().user
+    if (user) {
+      cloudSaveToSlot(user.id, slot).catch(console.error)
+    }
   },
 
   loadFromSlot: (slotId) => {
@@ -357,7 +366,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return slots
   },
 
+  fetchSaveSlots: async () => {
+    const localSlots = get().getSaveSlots()
+    const user = useAuthStore.getState().user
+    if (!user) return localSlots
+
+    const cloudSlots = await cloudGetSaveSlots(user.id)
+    return localSlots.map((local, i) => {
+      const cloud = cloudSlots[i]
+      if (!local && !cloud) return null
+      if (!local) return cloud
+      if (!cloud) return local
+      return local.timestamp >= cloud.timestamp ? local : cloud
+    })
+  },
+
   deleteSave: (slotId) => {
     localStorage.removeItem(`pleiades_save_${slotId}`)
+
+    const user = useAuthStore.getState().user
+    if (user) {
+      cloudDeleteSave(user.id, slotId).catch(console.error)
+    }
   },
 }))

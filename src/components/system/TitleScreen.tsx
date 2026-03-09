@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../stores/gameStore'
+import { useAuthStore } from '../../stores/authStore'
 import { AudioManager } from '../../systems/AudioManager'
 import { preloadAllImages } from '../../systems/ImagePreloader'
 
@@ -11,6 +12,11 @@ export function TitleScreen() {
   const [loadProgress, setLoadProgress] = useState(0)
   const startNewGame = useGameStore((s) => s.startNewGame)
   const loadFromSlot = useGameStore((s) => s.loadFromSlot)
+  const setScreen = useGameStore((s) => s.setScreen)
+  const user = useAuthStore((s) => s.user)
+  const authLoading = useAuthStore((s) => s.loading)
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle)
+  const signOut = useAuthStore((s) => s.signOut)
 
   // Play title BGM
   useEffect(() => {
@@ -171,9 +177,59 @@ export function TitleScreen() {
                 CONTINUE
               </button>
             )}
+            <button
+              onClick={() => { AudioManager.resume(); setScreen('load') }}
+              className="px-10 py-3 text-base tracking-[0.3em] cursor-pointer
+                         border border-pleiades-sky/20 rounded-lg
+                         hover:bg-pleiades-sky/10 hover:border-pleiades-sky/40
+                         transition-all duration-300 opacity-50 hover:opacity-80"
+              style={{ color: '#87CEEB' }}
+            >
+              LOAD
+            </button>
           </>
         )}
       </motion.div>
+
+      {/* Auth */}
+      {!authLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1.5 }}
+          className="absolute bottom-12 z-10"
+        >
+          {user ? (
+            <div className="flex items-center gap-2 text-xs opacity-50">
+              {user.user_metadata?.avatar_url && (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt=""
+                  className="w-5 h-5 rounded-full"
+                />
+              )}
+              <span style={{ color: '#87CEEB' }}>
+                {user.user_metadata?.full_name ?? user.email}
+              </span>
+              <button
+                onClick={signOut}
+                className="underline ml-1 cursor-pointer hover:opacity-80"
+                style={{ color: '#87CEEB' }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={signInWithGoogle}
+              className="text-xs opacity-40 hover:opacity-70 cursor-pointer transition-opacity"
+              style={{ color: '#87CEEB' }}
+            >
+              Login with Google (Cloud Save)
+            </button>
+          )}
+        </motion.div>
+      )}
 
       {/* Footer */}
       <div className="absolute bottom-4 text-xs opacity-20 tracking-wider">
