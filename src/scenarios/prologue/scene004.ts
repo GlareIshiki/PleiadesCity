@@ -14,7 +14,7 @@ export const scene004: Scene = {
     narrate('遊歩道沿いに、いくつかの店が並んでいた。\nカフェ、レストラン、バー。\nどれも洒落ているが、背伸びした感じはしない。'),
     narrate('その中に——ひときわ柔らかい照明の店があった。'),
 
-    bgm('romance'),
+    bgm('coworking'),
     se('door'),
     bg('shisha_bar', 'dissolve'),
     narrate('シーシャバー。'),
