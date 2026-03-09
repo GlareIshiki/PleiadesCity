@@ -65,7 +65,7 @@ export function PlaceholderImage({
       <img
         src={src}
         alt={label}
-        className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`${className} transition-opacity duration-200 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         style={style}
         onError={() => setFailed(true)}
         onLoad={() => setLoaded(true)}

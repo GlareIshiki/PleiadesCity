@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../stores/gameStore'
 import { AudioManager } from '../../systems/AudioManager'
+import { preloadAllImages } from '../../systems/ImagePreloader'
 
 export function TitleScreen() {
   const [showNameInput, setShowNameInput] = useState(false)
   const [playerName, setPlayerName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadProgress, setLoadProgress] = useState(0)
   const startNewGame = useGameStore((s) => s.startNewGame)
   const loadFromSlot = useGameStore((s) => s.loadFromSlot)
 
@@ -14,9 +17,18 @@ export function TitleScreen() {
     AudioManager.play('title', 2000)
   }, [])
 
-  const handleStart = () => {
+  // Preload images on mount (background)
+  useEffect(() => {
+    preloadAllImages()
+  }, [])
+
+  const handleStart = async () => {
     if (showNameInput) {
       const name = playerName.trim() || '主人公'
+      setIsLoading(true)
+      await preloadAllImages((loaded, total) => {
+        setLoadProgress(Math.round((loaded / total) * 100))
+      })
       AudioManager.stop(800)
       startNewGame(name)
     } else {
@@ -127,13 +139,14 @@ export function TitleScreen() {
             />
             <button
               onClick={handleStart}
+              disabled={isLoading}
               className="px-8 py-2 text-sm tracking-wider cursor-pointer
                          border border-pleiades-sky/30 rounded
                          hover:bg-pleiades-sky/10 hover:border-pleiades-sky/50
-                         transition-all duration-300"
+                         transition-all duration-300 disabled:opacity-50 disabled:cursor-wait"
               style={{ color: '#e8d5b7' }}
             >
-              はじめる
+              {isLoading ? `Loading... ${loadProgress}%` : 'はじめる'}
             </button>
           </motion.div>
         ) : (
