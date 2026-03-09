@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pleiades-navy: #1a1a2e;
+  --color-pleiades-ocean: #16213e;
+  --color-pleiades-dusk: #0f3460;
+  --color-pleiades-sand: #e8d5b7;
+  --color-pleiades-coral: #e94560;
+  --color-pleiades-sky: #87CEEB;
+  --color-aaa: #9370DB;
+  --color-bbb: #DAA520;
+
+  --font-sans: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --font-serif: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #e0e0e0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a1a;
+  }
+}
+
+/* Ruby text styling */
+ruby {
+  ruby-align: center;
+}
+
+rt {
+  font-size: 0.5em;
+  opacity: 0.85;
+  letter-spacing: 0.05em;
+}
+
+/* Typewriter cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
