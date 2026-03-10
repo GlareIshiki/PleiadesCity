@@ -5,18 +5,29 @@ import { useAuthStore } from '../../stores/authStore'
 import { AudioManager } from '../../systems/AudioManager'
 import { preloadAllImages } from '../../systems/ImagePreloader'
 
+type TitlePhase = 'auth' | 'menu' | 'name'
+
 export function TitleScreen() {
-  const [showNameInput, setShowNameInput] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const authLoading = useAuthStore((s) => s.loading)
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle)
+  const signOut = useAuthStore((s) => s.signOut)
+
+  // Skip auth selection if already logged in
+  const [phase, setPhase] = useState<TitlePhase>(user ? 'menu' : 'auth')
   const [playerName, setPlayerName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const startNewGame = useGameStore((s) => s.startNewGame)
   const loadFromSlot = useGameStore((s) => s.loadFromSlot)
   const setScreen = useGameStore((s) => s.setScreen)
-  const user = useAuthStore((s) => s.user)
-  const authLoading = useAuthStore((s) => s.loading)
-  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle)
-  const signOut = useAuthStore((s) => s.signOut)
+
+  // When auth finishes loading, go to menu if already logged in
+  useEffect(() => {
+    if (!authLoading && user && phase === 'auth') {
+      setPhase('menu')
+    }
+  }, [authLoading, user, phase])
 
   // Play title BGM
   useEffect(() => {
@@ -28,24 +39,28 @@ export function TitleScreen() {
     preloadAllImages()
   }, [])
 
-  const handleStart = async () => {
-    if (showNameInput) {
-      const name = playerName.trim() || '主人公'
-      setIsLoading(true)
-      await preloadAllImages((loaded, total) => {
-        setLoadProgress(Math.round((loaded / total) * 100))
-      })
-      AudioManager.stop(800)
-      startNewGame(name)
-    } else {
-      // Resume audio on first user interaction (autoplay policy)
-      AudioManager.resume()
-      setShowNameInput(true)
-    }
+  const handleSkipAuth = () => {
+    AudioManager.resume()
+    setPhase('menu')
+  }
+
+  const handleNewGame = () => {
+    AudioManager.resume()
+    setPhase('name')
+  }
+
+  const handleStartGame = async () => {
+    const name = playerName.trim() || '主人公'
+    setIsLoading(true)
+    await preloadAllImages((loaded, total) => {
+      setLoadProgress(Math.round((loaded / total) * 100))
+    })
+    AudioManager.stop(800)
+    startNewGame(name)
   }
 
   const handleContinue = () => {
-    // Try auto-save first, then slot 0
+    AudioManager.resume()
     const result = loadFromSlot(-1) ?? loadFromSlot(0)
     if (!result) {
       alert('セーブデータがありません')
@@ -123,40 +138,38 @@ export function TitleScreen() {
         transition={{ duration: 1, delay: 0.8 }}
         className="flex flex-col items-center gap-4 z-10"
       >
-        {showNameInput ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <p className="text-sm opacity-60">名前を入力してください</p>
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-              placeholder="主人公"
-              autoFocus
-              className="px-4 py-2 bg-white/10 border border-pleiades-sky/30 rounded
-                         text-center text-pleiades-sand outline-none focus:border-pleiades-sky/60
-                         w-48 placeholder:text-white/20"
-            />
-            <button
-              onClick={handleStart}
-              disabled={isLoading}
-              className="px-8 py-2 text-sm tracking-wider cursor-pointer
-                         border border-pleiades-sky/30 rounded
-                         hover:bg-pleiades-sky/10 hover:border-pleiades-sky/50
-                         transition-all duration-300 disabled:opacity-50 disabled:cursor-wait"
-              style={{ color: '#e8d5b7' }}
-            >
-              {isLoading ? `Loading... ${loadProgress}%` : 'はじめる'}
-            </button>
-          </motion.div>
-        ) : (
+        {phase === 'auth' && !authLoading && (
           <>
             <button
-              onClick={handleStart}
+              onClick={signInWithGoogle}
+              className="px-10 py-3 text-base tracking-[0.3em] cursor-pointer
+                         border border-pleiades-sky/30 rounded-lg
+                         hover:bg-pleiades-sky/10 hover:border-pleiades-sky/50
+                         transition-all duration-300"
+              style={{ color: '#e8d5b7' }}
+            >
+              Google でログイン
+            </button>
+            <button
+              onClick={handleSkipAuth}
+              className="px-10 py-3 text-base tracking-[0.3em] cursor-pointer
+                         border border-pleiades-sky/20 rounded-lg
+                         hover:bg-pleiades-sky/10 hover:border-pleiades-sky/40
+                         transition-all duration-300 opacity-60 hover:opacity-90"
+              style={{ color: '#87CEEB' }}
+            >
+              ログインせずに始める
+            </button>
+            <p className="text-xs opacity-30 mt-2" style={{ color: '#87CEEB' }}>
+              ログインするとセーブデータがクラウドに保存されます
+            </p>
+          </>
+        )}
+
+        {phase === 'menu' && (
+          <>
+            <button
+              onClick={handleNewGame}
               className="px-10 py-3 text-base tracking-[0.3em] cursor-pointer
                          border border-pleiades-sky/30 rounded-lg
                          hover:bg-pleiades-sky/10 hover:border-pleiades-sky/50
@@ -189,45 +202,66 @@ export function TitleScreen() {
             </button>
           </>
         )}
+
+        {phase === 'name' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <p className="text-sm opacity-60">名前を入力してください</p>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleStartGame()}
+              placeholder="主人公"
+              autoFocus
+              className="px-4 py-2 bg-white/10 border border-pleiades-sky/30 rounded
+                         text-center text-pleiades-sand outline-none focus:border-pleiades-sky/60
+                         w-48 placeholder:text-white/20"
+            />
+            <button
+              onClick={handleStartGame}
+              disabled={isLoading}
+              className="px-8 py-2 text-sm tracking-wider cursor-pointer
+                         border border-pleiades-sky/30 rounded
+                         hover:bg-pleiades-sky/10 hover:border-pleiades-sky/50
+                         transition-all duration-300 disabled:opacity-50 disabled:cursor-wait"
+              style={{ color: '#e8d5b7' }}
+            >
+              {isLoading ? `Loading... ${loadProgress}%` : 'はじめる'}
+            </button>
+          </motion.div>
+        )}
       </motion.div>
 
-      {/* Auth */}
-      {!authLoading && (
+      {/* User info (when logged in, shown on menu/name phase) */}
+      {user && phase !== 'auth' && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
           className="absolute bottom-12 z-10"
         >
-          {user ? (
-            <div className="flex items-center gap-2 text-xs opacity-50">
-              {user.user_metadata?.avatar_url && (
-                <img
-                  src={user.user_metadata.avatar_url}
-                  alt=""
-                  className="w-5 h-5 rounded-full"
-                />
-              )}
-              <span style={{ color: '#87CEEB' }}>
-                {user.user_metadata?.full_name ?? user.email}
-              </span>
-              <button
-                onClick={signOut}
-                className="underline ml-1 cursor-pointer hover:opacity-80"
-                style={{ color: '#87CEEB' }}
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
+          <div className="flex items-center gap-2 text-xs opacity-50">
+            {user.user_metadata?.avatar_url && (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt=""
+                className="w-5 h-5 rounded-full"
+              />
+            )}
+            <span style={{ color: '#87CEEB' }}>
+              {user.user_metadata?.full_name ?? user.email}
+            </span>
             <button
-              onClick={signInWithGoogle}
-              className="text-xs opacity-40 hover:opacity-70 cursor-pointer transition-opacity"
+              onClick={signOut}
+              className="underline ml-1 cursor-pointer hover:opacity-80"
               style={{ color: '#87CEEB' }}
             >
-              Login with Google (Cloud Save)
+              Logout
             </button>
-          )}
+          </div>
         </motion.div>
       )}
 
