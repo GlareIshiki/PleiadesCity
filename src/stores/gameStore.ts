@@ -324,6 +324,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       timestamp: Date.now(),
       week: gameState.week,
       backgroundId: display.background,
+      characters: JSON.parse(JSON.stringify(display.characters)),
+      bgm: display.bgm,
       gameState: JSON.parse(JSON.stringify(gameState)),
     }
     localStorage.setItem(`pleiades_save_${slotId}`, JSON.stringify(slot))
@@ -342,11 +344,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const slot: SaveSlot = JSON.parse(raw)
       set({
         gameState: slot.gameState,
-        display: { ...initialDisplay, background: slot.backgroundId },
+        display: {
+          ...initialDisplay,
+          background: slot.backgroundId,
+          characters: slot.characters ?? [],
+          bgm: slot.bgm ?? null,
+        },
         screen: 'game',
         waitingForInput: false,
         commandQueue: [],
       })
+      // Resume BGM if saved
+      if (slot.bgm) {
+        import('../systems/AudioManager').then(({ AudioManager }) => {
+          AudioManager.play(slot.bgm!, 500)
+        })
+      }
       // Reload the scene from saved position
       get().loadScene(slot.gameState.currentSceneId, slot.gameState.currentCommandIndex)
       return slot

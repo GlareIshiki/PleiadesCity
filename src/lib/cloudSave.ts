@@ -11,7 +11,13 @@ export async function cloudSaveToSlot(userId: string, slot: SaveSlot): Promise<v
       timestamp: slot.timestamp,
       week: slot.week,
       background_id: slot.backgroundId,
-      game_state: slot.gameState,
+      game_state: {
+        ...slot.gameState,
+        _display: {
+          characters: slot.characters,
+          bgm: slot.bgm,
+        },
+      },
     },
     { onConflict: 'user_id,slot_id' },
   )
@@ -32,12 +38,15 @@ export async function cloudGetSaveSlots(userId: string): Promise<(SaveSlot | nul
   const slots: (SaveSlot | null)[] = Array(SAVE_SLOT_COUNT).fill(null)
   for (const row of data) {
     if (row.slot_id >= 0 && row.slot_id < SAVE_SLOT_COUNT) {
+      const { _display, ...gameState } = row.game_state as Record<string, unknown>
       slots[row.slot_id] = {
         id: row.slot_id,
         timestamp: row.timestamp,
         week: row.week,
         backgroundId: row.background_id,
-        gameState: row.game_state,
+        characters: (_display as Record<string, unknown>)?.characters as SaveSlot['characters'] ?? [],
+        bgm: ((_display as Record<string, unknown>)?.bgm as string) ?? null,
+        gameState: gameState as unknown as SaveSlot['gameState'],
       }
     }
   }
@@ -56,12 +65,15 @@ export async function cloudLoadFromSlot(userId: string, slotId: number): Promise
 
   if (error || !data) return null
 
+  const { _display, ...gameState } = data.game_state as Record<string, unknown>
   return {
     id: data.slot_id,
     timestamp: data.timestamp,
     week: data.week,
     backgroundId: data.background_id,
-    gameState: data.game_state,
+    characters: (_display as Record<string, unknown>)?.characters as SaveSlot['characters'] ?? [],
+    bgm: ((_display as Record<string, unknown>)?.bgm as string) ?? null,
+    gameState: gameState as unknown as SaveSlot['gameState'],
   }
 }
 

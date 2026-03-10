@@ -258,5 +258,7 @@ export interface SaveSlot {
   timestamp: number
   week: number
   backgroundId: string | null
+  characters: CharacterOnScreen[]
+  bgm: string | null
   gameState: GameState
 }
