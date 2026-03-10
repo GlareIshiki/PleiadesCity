@@ -38,7 +38,7 @@ interface GameStore {
   // Actions
   setScreen: (screen: Screen) => void
   startNewGame: (playerName: string) => void
-  loadScene: (sceneId: string) => void
+  loadScene: (sceneId: string, startIndex?: number) => void
 
   // Script execution
   processNextCommand: () => ScriptCommand | null
@@ -127,19 +127,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().loadScene('prologue_001')
   },
 
-  loadScene: (sceneId) => {
+  loadScene: (sceneId, startIndex = 0) => {
     const scene = SCENE_REGISTRY[sceneId]
     if (!scene) {
       console.error(`Scene not found: ${sceneId}`)
       return
     }
     set((s) => ({
-      commandQueue: [...scene.commands],
+      commandQueue: scene.commands.slice(startIndex),
       waitingForInput: false,
       gameState: {
         ...s.gameState,
         currentSceneId: sceneId,
-        currentCommandIndex: 0,
+        currentCommandIndex: startIndex,
       },
     }))
   },
@@ -149,7 +149,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (waitingForInput || commandQueue.length === 0) return null
 
     const [cmd, ...rest] = commandQueue
-    set({ commandQueue: rest })
+    set((s) => ({
+      commandQueue: rest,
+      gameState: {
+        ...s.gameState,
+        currentCommandIndex: s.gameState.currentCommandIndex + 1,
+      },
+    }))
     return cmd
   },
 
@@ -341,8 +347,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         waitingForInput: false,
         commandQueue: [],
       })
-      // Reload the current scene from the saved position
-      get().loadScene(slot.gameState.currentSceneId)
+      // Reload the scene from saved position
+      get().loadScene(slot.gameState.currentSceneId, slot.gameState.currentCommandIndex)
       return slot
     } catch {
       return null
