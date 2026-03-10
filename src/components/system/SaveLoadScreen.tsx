@@ -39,6 +39,15 @@ export function SaveLoadScreen({ mode }: Props) {
     })
   }, [fetchSaveSlots])
 
+  // Esc to go back
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleBack()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   const handleSlotClick = (index: number) => {
     if (mode === 'save') {
       if (slots[index] && !confirm(`スロット ${index + 1} を上書きしますか？`)) return

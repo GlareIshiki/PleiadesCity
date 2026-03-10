@@ -15,7 +15,7 @@ export function useKeyboard(onAdvance: () => void) {
           onAdvance()
           break
         case 'Escape':
-          // Could toggle menu later
+          useGameStore.getState().setScreen('save')
           break
         case 'a':
           useGameStore.getState().setAutoMode(!useGameStore.getState().autoMode)
