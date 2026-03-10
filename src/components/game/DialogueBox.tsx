@@ -186,7 +186,7 @@ export function DialogueBox() {
 
         {/* Text box */}
         <div
-          className="relative p-6 rounded-lg min-h-[140px]"
+          className="relative p-6 rounded-lg h-[160px]"
           style={{
             backgroundColor: 'rgba(10, 10, 30, 0.88)',
             borderTop: charDef ? `2px solid ${charDef.nameColor}30` : '2px solid rgba(135, 206, 235, 0.2)',
